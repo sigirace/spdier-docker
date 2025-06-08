@@ -1,0 +1,46 @@
+version: "3.9"
+
+networks:
+  network:
+    external: true
+    name: network
+
+services:
+  chat-frontend:
+    image: sigirace/chat-frontend:latest
+    container_name: chat-frontend
+    ports:
+      - "80:3000"
+    networks:
+      - network
+    depends_on:
+      - chat-backend
+
+  chat-backend:
+    image: sigirace/chat-backend:latest
+    container_name: chat-backend
+    ports:
+      - "8000:8000"
+    networks:
+      - network
+    depends_on:
+      - mongo-db
+
+  studio:
+    image: sigirace/studio:latest
+    container_name: studio
+    ports:
+      - "8001:8000"
+    networks:
+      - network
+    depends_on:
+      - chat-backend
+      - milvus-standalone
+
+  rerank:
+    image: sigirace/rerank:latest
+    container_name: rerank
+    ports:
+      - "8002:8000"
+    networks:
+      - network

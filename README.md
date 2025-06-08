@@ -1,6 +1,6 @@
-# Mongodb
+# Infra
 
-## 1. key file
+## 1. Mongo key file
 
 ```
 openssl rand -base64 756 > mongo-keyfile
@@ -10,20 +10,30 @@ chmod 600 mongo-keyfile
 ## 2. build & run
 
 ```
-docker-compose -f docker-compose.yml up --build -d
+docker-compose -f docker-compose-infra.yaml up --build -d
 ```
 
 ## 3. Replica setting
 
+### 3.1 mongosh
+
 ```
 docker exec -it mongo-db mongosh -u admin -p admin1234!
 ```
+
+### 3.2 rs 생성
 
 ```
 rs.initiate({
   _id: "rs0",
   members: [{ _id: 0, host: "mongo-db:27017" }]
 });
+```
+
+### 3.3 확인
+
+```
+rs.status()
 ```
 
 ## 4. Restart
