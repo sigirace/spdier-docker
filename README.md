@@ -42,18 +42,23 @@ rs.status()
 docker-compose restart
 ```
 
-# Initialize
+# Initialize - Chatbot
+
+> localhost:8000/api/docs
 
 ## 1. signup
 
 ```
 {
-  "userId": "admin",
+  "user_id": "admin",
+  "user_name": "sigi
   "password": "1234"
 }
 ```
 
 ## 2. prompt
+
+### 2.1 planner system prompt
 
 ```
 {
@@ -62,12 +67,16 @@ docker-compose restart
 }
 ```
 
+### 2.2 final answer persona prompt
+
 ```
 {
   "name": "final_answer_persona",
   "content": "당신은 한화시스템/ICT의 TOMMS 챗봇 에이전트입니다.\n항상 친절하고 존댓말로 대화하세요.\n아래는 당신이 사용 가능한 기능들입니다.\n\n{tool_description}"
 }
 ```
+
+### 2.3 tool_list prompt
 
 ```
 {
@@ -76,6 +85,8 @@ docker-compose restart
 }
 ```
 
+### 2.4 final answer system prompt
+
 ```
 {
   "name": "final_answer_system",
@@ -83,7 +94,15 @@ docker-compose restart
 }
 ```
 
-## 3. app
+# Initialize - studio
+
+> localhost:8001/docs
+
+## 1. Auth
+
+- bearer token
+
+## 2. app
 
 ```
 {

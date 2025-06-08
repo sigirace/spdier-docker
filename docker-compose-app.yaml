@@ -13,8 +13,6 @@ services:
       - "80:3000"
     networks:
       - network
-    depends_on:
-      - chat-backend
 
   chat-backend:
     image: sigirace/chat-backend:latest
@@ -23,8 +21,6 @@ services:
       - "8000:8000"
     networks:
       - network
-    depends_on:
-      - mongo-db
 
   studio:
     image: sigirace/studio:latest
@@ -33,9 +29,6 @@ services:
       - "8001:8000"
     networks:
       - network
-    depends_on:
-      - chat-backend
-      - milvus-standalone
 
   rerank:
     image: sigirace/rerank:latest
