@@ -3,7 +3,7 @@
 ## 1. key file
 
 ```
-openssl rand -base64 756 > mongok-keyfile
+openssl rand -base64 756 > mongo-keyfile
 chmod 600 mongo-keyfile
 ```
 
