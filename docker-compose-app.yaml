@@ -17,6 +17,9 @@ services:
   chat-backend:
     image: sigirace/chat-backend:latest
     container_name: chat-backend
+    environment:
+      - HAIQV_EMBED_NOMIC_URL=http://10.255.255.254:11434
+      - HAIQV_URL=http://10.255.255.254:11434
     ports:
       - "8000:8000"
     networks:
@@ -25,6 +28,9 @@ services:
   studio:
     image: sigirace/studio:latest
     container_name: studio
+    environment:
+      - HAIQV_EMBED_NOMIC_URL=http://10.255.255.254:11434
+      - HAIQV_URL=http://10.255.255.254:11434
     ports:
       - "8001:8000"
     networks:
