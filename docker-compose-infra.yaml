@@ -111,6 +111,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin1234!
+    user: "0:0" 
     networks:
       - network
 
