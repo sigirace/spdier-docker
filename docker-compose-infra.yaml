@@ -5,6 +5,15 @@ networks:
     name: network
     driver: bridge
 
+volumes:
+  milvus-etcd-data:
+  milvus-minio-data:
+  milvus-data:
+  mongo-data:
+  mongo-backup:
+  mysql-data:
+  mysql-backup:
+
 services:
   # === Milvus Infrastructure ===
   milvus-etcd:
@@ -16,7 +25,7 @@ services:
       - ETCD_QUOTA_BACKEND_BYTES=4294967296
       - ETCD_SNAPSHOT_COUNT=50000
     volumes:
-      - ./data/milvus/etcd:/etcd-data
+      - milvus-etcd-data:/etcd-data
     command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
     networks:
       - network
@@ -36,7 +45,7 @@ services:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - ./data/milvus/minio:/minio_data
+      - milvus-minio-data:/minio_data
     command: minio server /minio_data --console-address ":9001"
     networks:
       - network
@@ -54,7 +63,7 @@ services:
       ETCD_ENDPOINTS: milvus-etcd:2379
       MINIO_ADDRESS: milvus-minio:9000
     volumes:
-      - ./data/milvus/core:/var/lib/milvus
+      - milvus-data:/var/lib/milvus
     ports:
       - "19530:19530"
     depends_on:
@@ -97,12 +106,12 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - ./data/mongo/db:/data/db
-      - ./data/mongo/backup:/backup
+      - mongo-data:/data/db
+      - mongo-backup:/backup
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin1234!
-    user: "0:0"
+    user: "0:0" 
     networks:
       - network
 
@@ -134,7 +143,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./data/mysql/db:/var/lib/mysql
-      - ./data/mysql/backup:/backup
+      - mysql-data:/var/lib/mysql
+      - mysql-backup:/backup
     networks:
       - network
