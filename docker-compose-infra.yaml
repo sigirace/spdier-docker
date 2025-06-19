@@ -2,18 +2,11 @@ version: "3.9"
 
 networks:
   network:
+    name: network
     driver: bridge
 
-volumes:
-  milvus-etcd-data:
-  milvus-minio-data:
-  milvus-data:
-  mongo-data:
-  mongo-backup:
-  mysql-data:
-  mysql-backup:
-
 services:
+  # === Milvus Infrastructure ===
   milvus-etcd:
     container_name: milvus-etcd
     image: quay.io/coreos/etcd:v3.5.5
@@ -23,78 +16,64 @@ services:
       - ETCD_QUOTA_BACKEND_BYTES=4294967296
       - ETCD_SNAPSHOT_COUNT=50000
     volumes:
-      - milvus-etcd-data:/etcd
-    command:
-      - etcd
-      - -advertise-client-urls=http://127.0.0.1:2379
-      - -listen-client-urls=http://0.0.0.0:2379
-      - --data-dir
-      - /etcd
+      - ./data/milvus/etcd:/etcd-data
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    networks:
+      - network
     healthcheck:
       test: ["CMD", "etcdctl", "endpoint", "health"]
       interval: 30s
       timeout: 20s
       retries: 3
-    networks:
-      - network
 
   milvus-minio:
     container_name: milvus-minio
     image: minio/minio:RELEASE.2023-03-20T20-16-18Z
     environment:
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - milvus-minio-data:/minio_data
-    command:
-      - minio
-      - server
-      - /minio_data
-      - --console-address
-      - ":9001"
+      - ./data/milvus/minio:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    networks:
+      - network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
-    networks:
-      - network
 
   milvus-standalone:
     container_name: milvus-standalone
     image: milvusdb/milvus:v2.4.6
     command: ["milvus", "run", "standalone"]
     environment:
-      - ETCD_ENDPOINTS=milvus-etcd:2379
-      - MINIO_ADDRESS=milvus-minio:9000
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin
-      - MINIO_BUCKET_NAME=milvus
+      ETCD_ENDPOINTS: milvus-etcd:2379
+      MINIO_ADDRESS: milvus-minio:9000
     volumes:
-      - milvus-data:/var/lib/milvus
+      - ./data/milvus/core:/var/lib/milvus
     ports:
       - "19530:19530"
-      - "9091:9091"
     depends_on:
       - milvus-etcd
       - milvus-minio
+    networks:
+      - network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
       interval: 30s
       timeout: 20s
       retries: 3
-    networks:
-      - network
 
   attu:
-    container_name: attu
     image: zilliz/attu:v2.3.4
+    container_name: attu
     restart: always
     environment:
-      - MILVUS_URL=milvus-standalone:19530
+      MILVUS_URL: milvus-standalone:19530
     depends_on:
       - milvus-standalone
     ports:
@@ -102,6 +81,7 @@ services:
     networks:
       - network
 
+  # === MongoDB Replica Set ===
   mongo-db:
     build:
       context: .
@@ -117,23 +97,23 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - mongo-data:/data/db
-      - mongo-backup:/backup
+      - ./data/mongo/db:/data/db
+      - ./data/mongo/backup:/backup
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=admin1234!
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin1234!
     user: "0:0"
     networks:
       - network
 
   mongo-express:
-    container_name: mongo-express
     image: mongo-express:1.0.0-alpha.4
+    container_name: mongo-express
     restart: always
     environment:
-      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
-      - ME_CONFIG_MONGODB_ADMINPASSWORD=admin1234!
-      - ME_CONFIG_MONGODB_SERVER=mongo-db
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin1234!
+      ME_CONFIG_MONGODB_SERVER: mongo-db
     ports:
       - "8081:8081"
     depends_on:
@@ -141,19 +121,20 @@ services:
     networks:
       - network
 
+  # === MySQL ===
   mysql-db:
-    container_name: mysql-db
     image: mysql:8.0
+    container_name: mysql-db
     restart: always
     environment:
-      - MYSQL_ROOT_PASSWORD=admin1234!
-      - MYSQL_USER=admin
-      - MYSQL_PASSWORD=admin1234!
-      - MYSQL_DATABASE=home
+      MYSQL_ROOT_PASSWORD: admin1234!
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin1234!
+      MYSQL_DATABASE: home
     ports:
       - "3306:3306"
     volumes:
-      - mysql-data:/var/lib/mysql
-      - mysql-backup:/backup
+      - ./data/mysql/db:/var/lib/mysql
+      - ./data/mysql/backup:/backup
     networks:
       - network
