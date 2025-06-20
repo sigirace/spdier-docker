@@ -7,19 +7,14 @@ openssl rand -base64 756 > mongo-keyfile
 chmod 600 mongo-keyfile
 ```
 
-## 2. backup folder
 
-```
-mkdir -p data/milvus/{etcd,minio,core} data/mongo/{db,backup} data/mysql/{db,backup}
-```
-
-## 3. build & run
+## 2. build & run
 
 ```
 docker-compose -f docker-compose-infra.yaml up --build -d
 ```
 
-## 4. Replica setting
+## 3. Replica setting
 
 ### 3.1 mongosh
 
@@ -129,3 +124,13 @@ docker-compose restart
 ## 5. embedding
 
 - by app_id
+
+## BaseImage
+
+```
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -f Dockerfile.base \
+  -t sigirace/spider-base:latest \
+  . \
+  --push
+```  
