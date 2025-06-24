@@ -7,8 +7,23 @@ networks:
 
 volumes:
   milvus-etcd-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/milvus/etcd
   milvus-minio-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/milvus/minio
   milvus-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/milvus/wal
   mongo-data:
   mongo-backup:
   mysql-data:
@@ -19,14 +34,19 @@ services:
   milvus-etcd:
     container_name: milvus-etcd
     image: quay.io/coreos/etcd:v3.5.5
+    restart: always
     environment:
       - ETCD_AUTO_COMPACTION_MODE=revision
       - ETCD_AUTO_COMPACTION_RETENTION=1000
       - ETCD_QUOTA_BACKEND_BYTES=4294967296
       - ETCD_SNAPSHOT_COUNT=50000
     volumes:
-      - milvus-etcd-data:/etcd-data
-    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+      - milvus-etcd-data:/etcd      # 중요: --data-dir 과 일치
+    command: >
+      etcd
+        -advertise-client-urls=http://127.0.0.1:2379
+        -listen-client-urls=http://0.0.0.0:2379
+        --data-dir /etcd
     networks:
       - network
     healthcheck:
@@ -38,6 +58,7 @@ services:
   milvus-minio:
     container_name: milvus-minio
     image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    restart: always
     environment:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
@@ -58,10 +79,13 @@ services:
   milvus-standalone:
     container_name: milvus-standalone
     image: milvusdb/milvus:v2.4.6
+    restart: always
     command: ["milvus", "run", "standalone"]
     environment:
       ETCD_ENDPOINTS: milvus-etcd:2379
       MINIO_ADDRESS: milvus-minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
     volumes:
       - milvus-data:/var/lib/milvus
     ports:
@@ -111,7 +135,8 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin1234!
-    user: "0:0" 
+    user: "0:0"
+    restart: always
     networks:
       - network
 
